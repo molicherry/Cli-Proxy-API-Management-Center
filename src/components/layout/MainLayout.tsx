@@ -409,7 +409,9 @@ export function MainLayout() {
         if (normalizedPath.startsWith('/ai-providers/gemini')) return aiProvidersIndex + 0.1;
         if (normalizedPath.startsWith('/ai-providers/codex')) return aiProvidersIndex + 0.2;
         if (normalizedPath.startsWith('/ai-providers/claude')) return aiProvidersIndex + 0.3;
+        if (normalizedPath.startsWith('/ai-providers/qoder')) return aiProvidersIndex + 0.35;
         if (normalizedPath.startsWith('/ai-providers/vertex')) return aiProvidersIndex + 0.4;
+        if (normalizedPath.startsWith('/ai-providers/qoder')) return aiProvidersIndex + 0.45;
         if (normalizedPath.startsWith('/ai-providers/ampcode')) return aiProvidersIndex + 0.5;
         if (normalizedPath.startsWith('/ai-providers/openai')) return aiProvidersIndex + 0.6;
         return aiProvidersIndex + 0.05;

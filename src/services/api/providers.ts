@@ -216,6 +216,21 @@ export const providersApi = {
   deleteVertexConfig: (apiKey: string, baseUrl?: string) =>
     apiClient.delete(`/vertex-api-key${buildProviderDeleteQuery(apiKey, baseUrl)}`),
 
+  async getQoderConfigs(): Promise<ProviderKeyConfig[]> {
+    const data = await apiClient.get('/qoder-api-key');
+    const list = extractArrayPayload(data, 'qoder-api-key');
+    return list.map((item) => normalizeProviderKeyConfig(item)).filter(Boolean) as ProviderKeyConfig[];
+  },
+
+  saveQoderConfigs: (configs: ProviderKeyConfig[]) =>
+    apiClient.put('/qoder-api-key', configs.map((item) => serializeProviderKey(item))),
+
+  updateQoderConfig: (index: number, value: ProviderKeyConfig) =>
+    apiClient.patch('/qoder-api-key', { index, value: serializeProviderKey(value) }),
+
+  deleteQoderConfig: (apiKey: string, baseUrl?: string) =>
+    apiClient.delete(`/qoder-api-key${buildProviderDeleteQuery(apiKey, baseUrl)}`),
+
   async getOpenAIProviders(): Promise<OpenAIProviderConfig[]> {
     const data = await apiClient.get('/openai-compatibility');
     const list = extractArrayPayload(data, 'openai-compatibility');

@@ -7,6 +7,7 @@ import {
   CodexSection,
   GeminiSection,
   OpenAISection,
+  QoderSection,
   VertexSection,
   ProviderNav,
   useProviderRecentRequests,
@@ -50,6 +51,9 @@ export function AiProvidersPage() {
   );
   const [vertexConfigs, setVertexConfigs] = useState<ProviderKeyConfig[]>(
     () => config?.vertexApiKeys || []
+  );
+  const [qoderConfigs, setQoderConfigs] = useState<ProviderKeyConfig[]>(
+    () => config?.qoderApiKeys || []
   );
   const [openaiProviders, setOpenaiProviders] = useState<OpenAIProviderConfig[]>(
     () => config?.openaiCompatibility || []
@@ -96,6 +100,7 @@ export function AiProvidersPage() {
       setCodexConfigs(data?.codexApiKeys || []);
       setClaudeConfigs(data?.claudeApiKeys || []);
       setVertexConfigs(data?.vertexApiKeys || []);
+      setQoderConfigs(data?.qoderApiKeys || []);
       setOpenaiProviders(data?.openaiCompatibility || []);
 
       if (vertexResult.status === 'fulfilled') {
@@ -138,12 +143,14 @@ export function AiProvidersPage() {
     if (config?.codexApiKeys) setCodexConfigs(config.codexApiKeys);
     if (config?.claudeApiKeys) setClaudeConfigs(config.claudeApiKeys);
     if (config?.vertexApiKeys) setVertexConfigs(config.vertexApiKeys);
+    if (config?.qoderApiKeys) setQoderConfigs(config.qoderApiKeys);
     if (config?.openaiCompatibility) setOpenaiProviders(config.openaiCompatibility);
   }, [
     config?.geminiApiKeys,
     config?.codexApiKeys,
     config?.claudeApiKeys,
     config?.vertexApiKeys,
+    config?.qoderApiKeys,
     config?.openaiCompatibility,
   ]);
 
@@ -185,7 +192,7 @@ export function AiProvidersPage() {
   };
 
   const setConfigEnabled = async (
-    provider: 'gemini' | 'codex' | 'claude' | 'vertex',
+    provider: 'gemini' | 'codex' | 'claude' | 'vertex' | 'qoder',
     index: number,
     enabled: boolean
   ) => {
@@ -230,7 +237,9 @@ export function AiProvidersPage() {
         ? codexConfigs
         : provider === 'claude'
           ? claudeConfigs
-          : vertexConfigs;
+          : provider === 'qoder'
+            ? qoderConfigs
+            : vertexConfigs;
     const current = source[index];
     if (!current) return;
 
@@ -252,6 +261,10 @@ export function AiProvidersPage() {
       setClaudeConfigs(nextList);
       updateConfigValue('claude-api-key', nextList);
       clearCache('claude-api-key');
+    } else if (provider === 'qoder') {
+      setQoderConfigs(nextList);
+      updateConfigValue('qoder-api-key', nextList);
+      clearCache('qoder-api-key');
     } else {
       setVertexConfigs(nextList);
       updateConfigValue('vertex-api-key', nextList);
@@ -263,6 +276,8 @@ export function AiProvidersPage() {
         await providersApi.saveCodexConfigs(nextList);
       } else if (provider === 'claude') {
         await providersApi.saveClaudeConfigs(nextList);
+      } else if (provider === 'qoder') {
+        await providersApi.saveQoderConfigs(nextList);
       } else {
         await providersApi.saveVertexConfigs(nextList);
       }
@@ -280,6 +295,10 @@ export function AiProvidersPage() {
         setClaudeConfigs(previousList);
         updateConfigValue('claude-api-key', previousList);
         clearCache('claude-api-key');
+      } else if (provider === 'qoder') {
+        setQoderConfigs(previousList);
+        updateConfigValue('qoder-api-key', previousList);
+        clearCache('qoder-api-key');
       } else {
         setVertexConfigs(previousList);
         updateConfigValue('vertex-api-key', previousList);
@@ -357,6 +376,30 @@ export function AiProvidersPage() {
     });
   };
 
+  const deleteQoder = async (index: number) => {
+    const entry = qoderConfigs[index];
+    if (!entry) return;
+    showConfirmation({
+      title: t('ai_providers.qoder_delete_title', { defaultValue: 'Delete Qoder Key' }),
+      message: t('ai_providers.qoder_delete_confirm'),
+      variant: 'danger',
+      confirmText: t('common.confirm'),
+      onConfirm: async () => {
+        try {
+          await providersApi.deleteQoderConfig(entry.apiKey, entry.baseUrl);
+          const next = qoderConfigs.filter((_, idx) => idx !== index);
+          setQoderConfigs(next);
+          updateConfigValue('qoder-api-key', next);
+          clearCache('qoder-api-key');
+          showNotification(t('notification.qoder_config_deleted'), 'success');
+        } catch (err: unknown) {
+          const message = getErrorMessage(err);
+          showNotification(`${t('notification.delete_failed')}: ${message}`, 'error');
+        }
+      },
+    });
+  };
+
   const deleteVertex = async (index: number) => {
     const entry = vertexConfigs[index];
     if (!entry) return;
@@ -373,6 +416,30 @@ export function AiProvidersPage() {
           updateConfigValue('vertex-api-key', next);
           clearCache('vertex-api-key');
           showNotification(t('notification.vertex_config_deleted'), 'success');
+        } catch (err: unknown) {
+          const message = getErrorMessage(err);
+          showNotification(`${t('notification.delete_failed')}: ${message}`, 'error');
+        }
+      },
+    });
+  };
+
+  const deleteQoder = async (index: number) => {
+    const entry = qoderConfigs[index];
+    if (!entry) return;
+    showConfirmation({
+      title: t('ai_providers.qoder_delete_title', { defaultValue: 'Delete Qoder Key' }),
+      message: t('ai_providers.qoder_delete_confirm'),
+      variant: 'danger',
+      confirmText: t('common.confirm'),
+      onConfirm: async () => {
+        try {
+          await providersApi.deleteQoderConfig(entry.apiKey, entry.baseUrl);
+          const next = qoderConfigs.filter((_, idx) => idx !== index);
+          setQoderConfigs(next);
+          updateConfigValue('qoder-api-key', next);
+          clearCache('qoder-api-key');
+          showNotification(t('notification.qoder_config_deleted'), 'success');
         } catch (err: unknown) {
           const message = getErrorMessage(err);
           showNotification(`${t('notification.delete_failed')}: ${message}`, 'error');
@@ -464,6 +531,20 @@ export function AiProvidersPage() {
             onEdit={(index) => openEditor(`/ai-providers/vertex/${index}`)}
             onDelete={deleteVertex}
             onToggle={(index, enabled) => void setConfigEnabled('vertex', index, enabled)}
+          />
+        </div>
+
+        <div id="provider-qoder">
+          <QoderSection
+            configs={qoderConfigs}
+            usageByProvider={usageByProvider}
+            loading={loading}
+            disableControls={disableControls}
+            isSwitching={isSwitching}
+            onAdd={() => openEditor('/ai-providers/qoder/new')}
+            onEdit={(index) => openEditor(`/ai-providers/qoder/${index}`)}
+            onDelete={deleteQoder}
+            onToggle={(index, enabled) => void setConfigEnabled('qoder', index, enabled)}
           />
         </div>
 
